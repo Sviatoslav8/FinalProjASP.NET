@@ -1,0 +1,17 @@
+C:\Users\User\Desktop\Studing\ASP.NET\FinalProjASP.Net\Storage\bin\Debug\net10.0\Storage.deps.json
+C:\Users\User\Desktop\Studing\ASP.NET\FinalProjASP.Net\Storage\bin\Debug\net10.0\Storage.dll
+C:\Users\User\Desktop\Studing\ASP.NET\FinalProjASP.Net\Storage\bin\Debug\net10.0\Storage.pdb
+C:\Users\User\Desktop\Studing\ASP.NET\FinalProjASP.Net\Storage\bin\Debug\net10.0\Domain.dll
+C:\Users\User\Desktop\Studing\ASP.NET\FinalProjASP.Net\Storage\bin\Debug\net10.0\Domain.pdb
+C:\Users\User\Desktop\Studing\ASP.NET\FinalProjASP.Net\Storage\obj\Debug\net10.0\Storage.csproj.AssemblyReference.cache
+C:\Users\User\Desktop\Studing\ASP.NET\FinalProjASP.Net\Storage\obj\Debug\net10.0\Storage.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\User\Desktop\Studing\ASP.NET\FinalProjASP.Net\Storage\obj\Debug\net10.0\Storage.AssemblyInfoInputs.cache
+C:\Users\User\Desktop\Studing\ASP.NET\FinalProjASP.Net\Storage\obj\Debug\net10.0\Storage.AssemblyInfo.cs
+C:\Users\User\Desktop\Studing\ASP.NET\FinalProjASP.Net\Storage\obj\Debug\net10.0\Storage.csproj.CoreCompileInputs.cache
+C:\Users\User\Desktop\Studing\ASP.NET\FinalProjASP.Net\Storage\obj\Debug\net10.0\Storage.csproj.Up2Date
+C:\Users\User\Desktop\Studing\ASP.NET\FinalProjASP.Net\Storage\obj\Debug\net10.0\Storage.dll
+C:\Users\User\Desktop\Studing\ASP.NET\FinalProjASP.Net\Storage\obj\Debug\net10.0\refint\Storage.dll
+C:\Users\User\Desktop\Studing\ASP.NET\FinalProjASP.Net\Storage\obj\Debug\net10.0\Storage.pdb
+C:\Users\User\Desktop\Studing\ASP.NET\FinalProjASP.Net\Storage\obj\Debug\net10.0\ref\Storage.dll
+C:\Users\User\Desktop\Studing\ASP.NET\FinalProjASP.Net\Storage\bin\Debug\net10.0\Storage.runtimeconfig.json
+C:\Users\User\Desktop\Studing\ASP.NET\FinalProjASP.Net\Storage\obj\Debug\net10.0\Storage.genruntimeconfig.cache
