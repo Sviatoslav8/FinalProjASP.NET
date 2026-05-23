@@ -7,6 +7,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Storage;
+using Amazon.DynamoDBv2;
+using Amazon.DynamoDBv2.DataModel;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -22,6 +24,8 @@ builder.Services.AddTransient<GlobalExceptionHandler>();
 builder.Services.AddMemoryCache();
 
 builder.Services.AddDbContext<DataContext>(opt=>opt.UseSqlServer("Server=(localdb)\\MSSQLLocalDB;Database=BestDataBaseASPNetProj;Trusted_Connection=True;"));
+builder.Services.AddAWSService<IAmazonDynamoDB>();
+builder.Services.AddScoped<DynamoDBContext>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>

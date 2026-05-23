@@ -14,10 +14,10 @@ public class JobsController : ControllerBase
         _service = service;
     }
     
-    [HttpGet]
-    public async Task<IActionResult> Get()
+    [HttpGet("{id}")]
+    public async Task<IActionResult> Get(string id)
     {
-        var jobs = await _service.GetJobs();
+        var jobs = await _service.GetById(id);
         return Ok(jobs);
     }
 

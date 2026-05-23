@@ -15,3 +15,4 @@ C:\Users\User\Desktop\Studing\ASP.NET\FinalProjASP.Net\Storage\obj\Debug\net10.0
 C:\Users\User\Desktop\Studing\ASP.NET\FinalProjASP.Net\Storage\obj\Debug\net10.0\ref\Storage.dll
 C:\Users\User\Desktop\Studing\ASP.NET\FinalProjASP.Net\Storage\bin\Debug\net10.0\Storage.runtimeconfig.json
 C:\Users\User\Desktop\Studing\ASP.NET\FinalProjASP.Net\Storage\obj\Debug\net10.0\Storage.genruntimeconfig.cache
+C:\Users\User\Desktop\Studing\ASP.NET\FinalProjASP.Net\Storage\obj\Debug\net10.0\Storage.sourcelink.json

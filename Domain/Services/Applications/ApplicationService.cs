@@ -1,4 +1,5 @@
-﻿using Domain.Abstraction;
+﻿using Amazon.DynamoDBv2.DataModel;
+using Domain.Abstraction;
 using Domain.Models;
 using Microsoft.Extensions.Logging;
 
@@ -7,10 +8,12 @@ namespace Domain.Services.Applications;
 public class ApplicationService
 {
     private readonly IApplicationRepository _repo;
+    private readonly DynamoDBContext _dynamo; 
     private readonly ILogger _logger;
 
-    public ApplicationService(IApplicationRepository repo, ILogger<ApplicationService> logger)
+    public ApplicationService(DynamoDBContext dynamo, IApplicationRepository repo, ILogger<ApplicationService> logger)
     {
+        _dynamo = dynamo;
         _repo = repo;
         _logger = logger;
     }
@@ -27,12 +30,36 @@ public class ApplicationService
         };
 
         app = await _repo.Add(app);
-
+        //DYNAMODB
+        await _dynamo.SaveAsync(new ApplicationDynamo
+        {
+            Id = app.Id.ToString(),
+            JobPostId = jobId.ToString(),
+            UserId = userId.ToString(),
+            Status = "Pending",
+            CoverLetter = request.CoverLetter,
+            AppliedDate = DateTime.UtcNow
+        });
+        
         _logger.LogInformation($"User {userId} applied to job {jobId}");
-
+        
         return Map(app);
     }
+    //DYNAMODB
+    public async Task<ApplicationDynamo?> GetById(string id)
+    {
+        return await _dynamo.LoadAsync<ApplicationDynamo>(id);
+    }
+    //DYNAMODB
+    public async Task<List<ApplicationDynamo>> GetUserApplications(string userId)
+    {
+        var scan = _dynamo.ScanAsync<ApplicationDynamo>(new List<ScanCondition>
+        {
+            new ScanCondition("UserId", Amazon.DynamoDBv2.DocumentModel.ScanOperator.Equal, userId)
+        });
 
+        return await scan.GetRemainingAsync();
+    }
     public async Task<ApplicationResponse[]> GetUserApplications(int userId)
     {
         var apps = await _repo.GetByUserId(userId);

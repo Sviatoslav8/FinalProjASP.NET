@@ -1,4 +1,5 @@
-﻿using Domain.Abstraction;
+﻿using Amazon.DynamoDBv2.DataModel;
+using Domain.Abstraction;
 using Domain.Models;
 using Microsoft.Extensions.Logging;
 
@@ -7,12 +8,14 @@ namespace Domain.Services.Jobs;
 public class JobService
 {
     private readonly IJobRepository _repo;
+    private readonly DynamoDBContext _dynamo;
     private readonly ILogger _logger;
 
-    public JobService(IJobRepository repo, ILogger<JobService> logger)
+    public JobService(DynamoDBContext dynamo, IJobRepository repo, ILogger<JobService> logger)
     {
         _repo = repo;
         _logger = logger;
+        _dynamo = dynamo;
     }
 
     public async Task<JobResponse[]> GetJobs()
@@ -24,20 +27,25 @@ public class JobService
 
     public async Task<JobResponse> Add(CreateJobRequest request)
     {
-        var job = new JobPost
+        
+        //DYNAMODB
+        var job = new JobPostDynamo
         {
+            Id = Guid.NewGuid().ToString(),
             Title = request.Title,
             Description = request.Description,
             Requirements = request.Requirements,
             PostedDate = DateTime.UtcNow,
             IsActive = true
         };
-
-        job = await _repo.Add(job);
-
+        await _dynamo.SaveAsync(job);
         _logger.LogInformation($"Job {job.Title} created");
 
-        return Map(job);
+        return new JobResponse
+        {
+            Id = int.Parse(job.Id.GetHashCode().ToString()),
+            Title = job.Title
+        };
     }
 
     public async Task<JobResponse> Update(int id, CreateJobRequest request)
@@ -54,6 +62,21 @@ public class JobService
         job = await _repo.Update(job);
 
         return Map(job);
+    }
+    //DYNAMODB
+    public async Task<JobPostDynamo?> GetById(string id)
+    {
+        return await _dynamo.LoadAsync<JobPostDynamo>(id);
+    }
+    //DYNAMODB
+    public async Task<List<JobPostDynamo>> GetActiveJobs()
+    {
+        var scan = _dynamo.ScanAsync<JobPostDynamo>(new List<ScanCondition>
+        {
+            new ScanCondition("IsActive", Amazon.DynamoDBv2.DocumentModel.ScanOperator.Equal, true)
+        });
+
+        return await scan.GetRemainingAsync();
     }
 
     public async Task Close(int id)
