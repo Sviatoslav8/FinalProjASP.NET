@@ -1,5 +1,4 @@
 ﻿using Amazon.DynamoDBv2.DataModel;
-using Domain.Abstraction;
 using Domain.Models;
 using Microsoft.Extensions.Logging;
 
@@ -7,91 +6,72 @@ namespace Domain.Services.Applications;
 
 public class ApplicationService
 {
-    private readonly IApplicationRepository _repo;
     private readonly DynamoDBContext _dynamo; 
-    private readonly ILogger _logger;
+    private readonly ILogger<ApplicationService> _logger;
 
-    public ApplicationService(DynamoDBContext dynamo, IApplicationRepository repo, ILogger<ApplicationService> logger)
+    public ApplicationService(DynamoDBContext dynamo, ILogger<ApplicationService> logger)
     {
         _dynamo = dynamo;
-        _repo = repo;
         _logger = logger;
     }
 
-    public async Task<ApplicationResponse> Apply(int jobId, int userId, CreateApplicationRequest request)
+    // 1. Створення анонімної заявки на вакансію
+    public async Task<ApplicationResponse> Apply(string jobId, CreateApplicationRequest request)
     {
-        var app = new Application()
+        var appDynamo = new ApplicationDynamo
         {
-            JobPostId = jobId,
-            UserId = userId,
-            CoverLetter = request.CoverLetter,
-            AppliedDate = DateTime.UtcNow,
-            Status = "Pending"
-        };
-
-        app = await _repo.Add(app);
-        //DYNAMODB
-        await _dynamo.SaveAsync(new ApplicationDynamo
-        {
-            Id = app.Id.ToString(),
-            JobPostId = jobId.ToString(),
-            UserId = userId.ToString(),
+            Id = Guid.NewGuid().ToString(), // Унікальний ID для самої заявки
+            JobPostId = jobId,             // ID вакансії
+            UserId = "Anonymous",          // Користувач не потрібен, пишемо Anonymous
             Status = "Pending",
             CoverLetter = request.CoverLetter,
             AppliedDate = DateTime.UtcNow
-        });
+        };
+
+        await _dynamo.SaveAsync(appDynamo);
+        _logger.LogInformation($"Anonymous application {appDynamo.Id} created for job {jobId}");
         
-        _logger.LogInformation($"User {userId} applied to job {jobId}");
-        
-        return Map(app);
+        return new ApplicationResponse 
+        { 
+            Id = appDynamo.Id, 
+            Status = appDynamo.Status 
+        };
     }
-    //DYNAMODB
+
+    // 2. Отримання конкретної заявки по її ID
     public async Task<ApplicationDynamo?> GetById(string id)
     {
         return await _dynamo.LoadAsync<ApplicationDynamo>(id);
     }
-    //DYNAMODB
-    public async Task<List<ApplicationDynamo>> GetUserApplications(string userId)
+
+    // 3. Отримання всіх заявок на конкретну вакансію
+    public async Task<ApplicationDynamo[]> GetJobApplications(string jobId)
     {
         var scan = _dynamo.ScanAsync<ApplicationDynamo>(new List<ScanCondition>
         {
-            new ScanCondition("UserId", Amazon.DynamoDBv2.DocumentModel.ScanOperator.Equal, userId)
+            new ScanCondition("JobPostId", Amazon.DynamoDBv2.DocumentModel.ScanOperator.Equal, jobId)
         });
 
-        return await scan.GetRemainingAsync();
-    }
-    public async Task<ApplicationResponse[]> GetUserApplications(int userId)
-    {
-        var apps = await _repo.GetByUserId(userId);
-
-        return apps.Select(Map).ToArray();
+        var results = await scan.GetRemainingAsync();
+        return results.ToArray();
     }
 
-    public async Task<ApplicationResponse[]> GetJobApplications(int jobId)
+    // 4. Оновлення статусу заявки (наприклад, з Pending на Accepted або Rejected)
+    public async Task<ApplicationResponse> UpdateStatus(string id, UpdateApplicationStatusRequest request)
     {
-        var apps = await _repo.GetByJobId(jobId);
-
-        return apps.Select(Map).ToArray();
-    }
-
-    public async Task<ApplicationResponse> UpdateStatus(int id, UpdateApplicationStatusRequest request)
-    {
-        var app = await _repo.Get(id);
+        var app = await _dynamo.LoadAsync<ApplicationDynamo>(id);
 
         if (app == null)
-            throw new Exception("Application not found");
+            throw new Exception($"Application with ID {id} not found");
 
         app.Status = request.Status;
 
-        app = await _repo.Update(app);
+        await _dynamo.SaveAsync(app); // Перезаписує об'єкт в DynamoDB з новим статусом
 
-        return Map(app);
+        return new ApplicationResponse
+        {
+            Id = app.Id,
+            Status = app.Status
+        };
     }
-
-    private ApplicationResponse Map(Application app) => new()
-    {
-        Id = app.Id,
-        Status = app.Status,
-    };
-
 }

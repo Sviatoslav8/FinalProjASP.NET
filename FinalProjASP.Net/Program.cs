@@ -9,6 +9,8 @@ using Microsoft.OpenApi;
 using Storage;
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
+using Domain.Services.Applications;
+using Domain.Services.Jobs;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -23,11 +25,15 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddTransient<GlobalExceptionHandler>();
 builder.Services.AddMemoryCache();
 
-builder.Services.AddDbContext<DataContext>(opt=>opt.UseSqlServer("Server=(localdb)\\MSSQLLocalDB;Database=BestDataBaseASPNetProj;Trusted_Connection=True;"));
+//builder.Services.AddDbContext<DataContext>(opt=>opt.UseSqlServer("Server=(localdb)\\MSSQLLocalDB;Database=BestDataBaseASPNetProj;Trusted_Connection=True;"));
+var awsOptions = builder.Configuration.GetAWSOptions();
+builder.Services.AddDefaultAWSOptions(awsOptions);
 builder.Services.AddAWSService<IAmazonDynamoDB>();
 builder.Services.AddScoped<DynamoDBContext>();
+builder.Services.AddScoped<JobService>();
+builder.Services.AddScoped<ApplicationService>();
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+/*builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new()
@@ -42,7 +48,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["SecretKey"]!))
         };
-    });
+    });*/
 
 builder.Services.AddAuthorization(opt => opt
     .AddPolicy("Admin", 
@@ -50,7 +56,7 @@ builder.Services.AddAuthorization(opt => opt
             .RequireRole("Admin")));
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
-builder.Services.AddFinalProjServices();
+//builder.Services.AddFinalProjServices();
 var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {

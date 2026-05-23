@@ -1,5 +1,4 @@
 ﻿using Amazon.DynamoDBv2.DataModel;
-using Domain.Abstraction;
 using Domain.Models;
 using Microsoft.Extensions.Logging;
 
@@ -7,28 +6,28 @@ namespace Domain.Services.Jobs;
 
 public class JobService
 {
-    private readonly IJobRepository _repo;
     private readonly DynamoDBContext _dynamo;
-    private readonly ILogger _logger;
-
-    public JobService(DynamoDBContext dynamo, IJobRepository repo, ILogger<JobService> logger)
+    private readonly ILogger<JobService> _logger;
+    
+    public JobService(DynamoDBContext dynamo, ILogger<JobService> logger)
     {
-        _repo = repo;
         _logger = logger;
         _dynamo = dynamo;
     }
-
+    
     public async Task<JobResponse[]> GetJobs()
     {
-        var jobs = await _repo.GetAllActive();
-
-        return jobs.Select(Map).ToArray();
+        var activeJobs = await GetActiveJobs();
+        return activeJobs.Select(job => new JobResponse
+        {
+            Id = int.Parse(job.Id.GetHashCode().ToString()),
+            Title = job.Title
+        }).ToArray();
     }
 
+    
     public async Task<JobResponse> Add(CreateJobRequest request)
     {
-        
-        //DYNAMODB
         var job = new JobPostDynamo
         {
             Id = Guid.NewGuid().ToString(),
@@ -38,8 +37,9 @@ public class JobService
             PostedDate = DateTime.UtcNow,
             IsActive = true
         };
+        
         await _dynamo.SaveAsync(job);
-        _logger.LogInformation($"Job {job.Title} created");
+        _logger.LogInformation($"Job {job.Title} created in DynamoDB");
 
         return new JobResponse
         {
@@ -48,9 +48,11 @@ public class JobService
         };
     }
 
-    public async Task<JobResponse> Update(int id, CreateJobRequest request)
+   
+    public async Task<JobResponse> Update(string id, CreateJobRequest request)
     {
-        var job = await _repo.Get(id);
+        
+        var job = await _dynamo.LoadAsync<JobPostDynamo>(id);
 
         if (job == null)
             throw new Exception("Job not found");
@@ -59,16 +61,22 @@ public class JobService
         job.Description = request.Description;
         job.Requirements = request.Requirements;
 
-        job = await _repo.Update(job);
+        await _dynamo.SaveAsync(job);
 
-        return Map(job);
+        return new JobResponse
+        {
+            Id = int.Parse(job.Id.GetHashCode().ToString()),
+            Title = job.Title
+        };
     }
-    //DYNAMODB
+
+    
     public async Task<JobPostDynamo?> GetById(string id)
     {
         return await _dynamo.LoadAsync<JobPostDynamo>(id);
     }
-    //DYNAMODB
+
+    
     public async Task<List<JobPostDynamo>> GetActiveJobs()
     {
         var scan = _dynamo.ScanAsync<JobPostDynamo>(new List<ScanCondition>
@@ -79,24 +87,26 @@ public class JobService
         return await scan.GetRemainingAsync();
     }
 
-    public async Task Close(int id)
+    
+    public async Task Close(string id)
     {
-        var job = await _repo.Get(id);
+        var job = await _dynamo.LoadAsync<JobPostDynamo>(id);
 
         if (job == null)
             throw new Exception("Job not found");
 
         job.IsActive = false;
 
-        await _repo.Update(job);
+        await _dynamo.SaveAsync(job);
     }
 
-    public Task Delete(int id)
-        => _repo.Delete(id);
-
-    private JobResponse Map(JobPost job) => new()
+   
+    public async Task Delete(string id)
     {
-        Id = job.Id,
-        Title = job.Title
-    };
+        var job = await _dynamo.LoadAsync<JobPostDynamo>(id);
+        if (job != null)
+        {
+            await _dynamo.DeleteAsync(job);
+        }
+    }
 }

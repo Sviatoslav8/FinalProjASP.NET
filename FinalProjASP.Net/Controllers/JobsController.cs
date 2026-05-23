@@ -29,21 +29,21 @@ public class JobsController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, CreateJobRequest request)
+    public async Task<IActionResult> Update(string id, CreateJobRequest request)
     {
         var job = await _service.Update(id, request);
         return Ok(job);
     }
 
     [HttpPut("{id}/close")]
-    public async Task<IActionResult> Close(int id)
+    public async Task<IActionResult> Close(string id)
     {
         await _service.Close(id);
         return Ok(new { Message = "Job closed successfully" });
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(int id)
+    public async Task<IActionResult> Delete(string id)
     {
         await _service.Delete(id);
         return Ok(new { Message = "Job deleted successfully" });

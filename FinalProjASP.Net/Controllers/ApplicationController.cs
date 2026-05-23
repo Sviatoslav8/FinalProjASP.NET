@@ -1,10 +1,9 @@
-﻿using System.Security.Claims;
-using Domain.Services.Applications;
-using Domain.Services.Jobs;
-using Microsoft.AspNetCore.Authorization;
+﻿using Domain.Services.Applications;
+using Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FinalProjASP.Net.Controllers;
+
 [ApiController]
 [Route("api/v1/applications")]
 public class ApplicationController : ControllerBase
@@ -16,32 +15,56 @@ public class ApplicationController : ControllerBase
         _service = service;
     }
     
-    
-    [HttpPost("{jobId}/users/{userId}")]
-    public async Task<IActionResult> Apply(int jobId, int userId, CreateApplicationRequest request)
+    // 1. Подати заявку на вакансію (в URL передаємо тільки jobId)
+    [HttpPost("{jobId}")]
+    public async Task<IActionResult> Apply(
+        [FromRoute] string jobId, 
+        [FromBody] CreateApplicationRequest request)
     {
-        var result = await _service.Apply(jobId, userId, request);
+        if (request == null)
+            return BadRequest(new { Message = "Request body cannot be null" });
+
+        var result = await _service.Apply(jobId, request);
         return Ok(result);
     }
 
-    [HttpGet("user/{userId}")]
-    public async Task<IActionResult> GetUserApps(int userId)
+    // 2. Отримати конкретну заявку за її ID
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetById([FromRoute] string id)
     {
-        var apps = await _service.GetUserApplications(userId);
-        return Ok(apps);
+        var app = await _service.GetById(id);
+        
+        if (app == null)
+            return NotFound(new { Message = $"Application with ID {id} not found" });
+
+        return Ok(app);
     }
 
+    // 3. Отримати всі заявки, які прийшли на конкретну вакансію
     [HttpGet("job/{jobId}")]
-    public async Task<IActionResult> GetByJob(int jobId)
+    public async Task<IActionResult> GetByJob([FromRoute] string jobId)
     {
         var apps = await _service.GetJobApplications(jobId);
         return Ok(apps);
     }
 
+    // 4. Змінити статус заявки (прийняти/відхилити)
     [HttpPut("{id}/status")]
-    public async Task<IActionResult> UpdateStatus(int id, UpdateApplicationStatusRequest request)
+    public async Task<IActionResult> UpdateStatus(
+        [FromRoute] string id, 
+        [FromBody] UpdateApplicationStatusRequest request)
     {
-        var app = await _service.UpdateStatus(id, request);
-        return Ok(app);
+        if (request == null)
+            return BadRequest(new { Message = "Request body cannot be null" });
+
+        try
+        {
+            var app = await _service.UpdateStatus(id, request);
+            return Ok(app);
+        }
+        catch (Exception ex) when (ex.Message.Contains("not found"))
+        {
+            return NotFound(new { Message = ex.Message });
+        }
     }
 }
