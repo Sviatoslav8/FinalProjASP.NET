@@ -15,7 +15,7 @@ public class ApplicationController : ControllerBase
         _service = service;
     }
     
-    // 1. Подати заявку на вакансію (в URL передаємо тільки jobId)
+    
     [HttpPost("{jobId}")]
     public async Task<IActionResult> Apply(
         [FromRoute] string jobId, 
@@ -27,8 +27,7 @@ public class ApplicationController : ControllerBase
         var result = await _service.Apply(jobId, request);
         return Ok(result);
     }
-
-    // 2. Отримати конкретну заявку за її ID
+    
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById([FromRoute] string id)
     {
@@ -40,7 +39,7 @@ public class ApplicationController : ControllerBase
         return Ok(app);
     }
 
-    // 3. Отримати всі заявки, які прийшли на конкретну вакансію
+    
     [HttpGet("job/{jobId}")]
     public async Task<IActionResult> GetByJob([FromRoute] string jobId)
     {
@@ -48,7 +47,7 @@ public class ApplicationController : ControllerBase
         return Ok(apps);
     }
 
-    // 4. Змінити статус заявки (прийняти/відхилити)
+    
     [HttpPut("{id}/status")]
     public async Task<IActionResult> UpdateStatus(
         [FromRoute] string id, 

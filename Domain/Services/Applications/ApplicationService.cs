@@ -15,14 +15,14 @@ public class ApplicationService
         _logger = logger;
     }
 
-    // 1. Створення анонімної заявки на вакансію
+
     public async Task<ApplicationResponse> Apply(string jobId, CreateApplicationRequest request)
     {
         var appDynamo = new ApplicationDynamo
         {
-            Id = Guid.NewGuid().ToString(), // Унікальний ID для самої заявки
-            JobPostId = jobId,             // ID вакансії
-            UserId = "Anonymous",          // Користувач не потрібен, пишемо Anonymous
+            Id = Guid.NewGuid().ToString(), 
+            JobPostId = jobId,           
+            UserId = "Anonymous",        
             Status = "Pending",
             CoverLetter = request.CoverLetter,
             AppliedDate = DateTime.UtcNow
@@ -37,14 +37,12 @@ public class ApplicationService
             Status = appDynamo.Status 
         };
     }
-
-    // 2. Отримання конкретної заявки по її ID
+    
     public async Task<ApplicationDynamo?> GetById(string id)
     {
         return await _dynamo.LoadAsync<ApplicationDynamo>(id);
     }
-
-    // 3. Отримання всіх заявок на конкретну вакансію
+    
     public async Task<ApplicationDynamo[]> GetJobApplications(string jobId)
     {
         var scan = _dynamo.ScanAsync<ApplicationDynamo>(new List<ScanCondition>
@@ -55,8 +53,7 @@ public class ApplicationService
         var results = await scan.GetRemainingAsync();
         return results.ToArray();
     }
-
-    // 4. Оновлення статусу заявки (наприклад, з Pending на Accepted або Rejected)
+    
     public async Task<ApplicationResponse> UpdateStatus(string id, UpdateApplicationStatusRequest request)
     {
         var app = await _dynamo.LoadAsync<ApplicationDynamo>(id);
@@ -66,7 +63,7 @@ public class ApplicationService
 
         app.Status = request.Status;
 
-        await _dynamo.SaveAsync(app); // Перезаписує об'єкт в DynamoDB з новим статусом
+        await _dynamo.SaveAsync(app);
 
         return new ApplicationResponse
         {
